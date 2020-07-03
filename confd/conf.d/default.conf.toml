@@ -1,0 +1,13 @@
+[template]
+src  = "default.conf.tmpl"
+dest = "/etc/nginx/conf.d/default.conf"
+keys = [
+    "/client/id",
+    "/client/secret",
+    "/fqdn",
+    "/keycloak/fqdn",
+    "/keycloak/realm",
+    "/proxy/host",
+    "/proxy/port",
+    "/proxy/protocol"
+]
