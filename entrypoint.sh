@@ -2,7 +2,7 @@
 
 confd -onetime -backend env -log-level debug || exit 1
 
-if [ -f /tls/tls.crt]; then
+if [ -f /tls/tls.crt ]; then
   echo "Using supplied certificate"
 else
   openssl \
