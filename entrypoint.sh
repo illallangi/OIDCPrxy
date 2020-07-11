@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
 
 confd -onetime -backend env -log-level debug || exit 1
+cat /etc/nginx/conf.d/default.conf
 
 if [ -f /tls/tls.crt ]; then
   echo "Using supplied certificate"
