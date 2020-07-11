@@ -17,50 +17,55 @@ server {
   lua_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
   lua_ssl_verify_depth 5;
 
-  access_by_lua '
-    
-    local function not_in_group (tab, val)
-      for index, value in ipairs(tab) do
-        if value == val then
-          return false
+{{range ls "/proxy"}}
+  # PROXY_{{ toUpper . }}_*
+  location {{getv (print "/proxy/" . "/location")}} {
+
+    access_by_lua '
+      
+      local function not_in_group (tab, val)
+        for index, value in ipairs(tab) do
+          if value == val then
+            return false
+          end
         end
+        return true
       end
-      return true
-    end
-    
-    local opts = {
-      redirect_uri_path = "/sso",
-      accept_none_alg = true,
-      discovery = "https://{{getv "/keycloak/fqdn" }}/auth/realms/{{getv "/keycloak/realm" }}/.well-known/openid-configuration",
-      client_id = "{{getv "/client/id" }}",
-      client_secret = "{{getv "/client/secret" }}",
-      redirect_uri_scheme = "https",
-      logout_path = "/logout",
-      redirect_after_logout_uri = "https://{{getv "/keycloak/fqdn" }}/auth/realms/{{getv "/keycloak/realm" }}/protocol/openid-connect/logout?redirect_uri=https://{{getv "/fqdn"}}/",
-      redirect_after_logout_with_id_token_hint = false,
-      session_contents = {
-        id_token=true
+      
+      local opts = {
+        redirect_uri_path = "/sso",
+        accept_none_alg = true,
+        discovery = "https://{{getv "/keycloak/fqdn" }}/auth/realms/{{getv "/keycloak/realm" }}/.well-known/openid-configuration",
+        client_id = "{{getv "/client/id" }}",
+        client_secret = "{{getv "/client/secret" }}",
+        redirect_uri_scheme = "https",
+        logout_path = "/logout",
+        redirect_after_logout_uri = "https://{{getv "/keycloak/fqdn" }}/auth/realms/{{getv "/keycloak/realm" }}/protocol/openid-connect/logout?redirect_uri=https://{{getv "/fqdn"}}/",
+        redirect_after_logout_with_id_token_hint = false,
+        session_contents = {
+          id_token=true
+        }
       }
-    }
-    -- call introspect for OAuth 2.0 Bearer Access Token validation
-    local res, err = require("resty.openidc").authenticate(opts)
-    if err then
-      ngx.status = 403
-      ngx.exit(ngx.HTTP_FORBIDDEN)
-    end
-    
-    if not_in_group(res.id_token.groups, "{{getv "/fqdn"}}") then
-      ngx.status = 403
-      ngx.exit(ngx.HTTP_FORBIDDEN)
-    end      
-    
-    -- set headers with user info: this will overwrite any existing headers
-    -- but also scrub(!) them in case no value is provided in the token
-    ngx.req.set_header("x-keycloak-username", res.id_token.username)
-    ngx.req.set_header("x-keycloak-name",     res.id_token.name)
-    ngx.req.set_header("x-keycloak-email",    res.id_token.email)
-  ';
-  location / {
-    proxy_pass {{getv "/proxy/protocol" "http" }}://{{getv "/proxy/host" "localhost"}}:{{getv "/proxy/port" "80"}};
+      -- call introspect for OAuth 2.0 Bearer Access Token validation
+      local res, err = require("resty.openidc").authenticate(opts)
+      if err then
+        ngx.status = 403
+        ngx.exit(ngx.HTTP_FORBIDDEN)
+      end
+      
+      if not_in_group(res.id_token.groups, "{{getv (print "/proxy/" . "/group") (getv "/fqdn")}}") then
+        ngx.status = 403
+        ngx.exit(ngx.HTTP_FORBIDDEN)
+      end      
+      
+      -- set headers with user info: this will overwrite any existing headers
+      -- but also scrub(!) them in case no value is provided in the token
+      ngx.req.set_header("x-keycloak-username", res.id_token.username)
+      ngx.req.set_header("x-keycloak-name",     res.id_token.name)
+      ngx.req.set_header("x-keycloak-email",    res.id_token.email)
+    ';
+    proxy_pass {{getv (print "/proxy/" . "/protocol") "http"}}://{{getv (print "/proxy/" . "/host") "localhost"}}:{{getv (print "/proxy/" . "/port") "80"}};
   }
+{{end}}
 }
+

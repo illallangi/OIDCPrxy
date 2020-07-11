@@ -7,7 +7,5 @@ keys = [
     "/fqdn",
     "/keycloak/fqdn",
     "/keycloak/realm",
-    "/proxy/host",
-    "/proxy/port",
-    "/proxy/protocol"
+    "/proxy"
 ]
