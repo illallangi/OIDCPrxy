@@ -29,12 +29,12 @@ server {
     end
     
     local opts = {
-      redirect_uri_path = "/redirect_uri",
+      redirect_uri_path = "/sso",
       accept_none_alg = true,
       discovery = "https://{{getv "/keycloak/fqdn" }}/auth/realms/{{getv "/keycloak/realm" }}/.well-known/openid-configuration",
       client_id = "{{getv "/client/id" }}",
       client_secret = "{{getv "/client/secret" }}",
-      redirect_uri_scheme = "{{getv "/proxy/protocol" "http" }}",
+      redirect_uri_scheme = "https",
       logout_path = "/logout",
       redirect_after_logout_uri = "https://{{getv "/keycloak/fqdn" }}/auth/realms/{{getv "/keycloak/realm" }}/protocol/openid-connect/logout?redirect_uri=https://{{getv "/fqdn"}}/",
       redirect_after_logout_with_id_token_hint = false,
@@ -49,7 +49,7 @@ server {
       ngx.exit(ngx.HTTP_FORBIDDEN)
     end
     
-    if not_in_group(res.id_token.groups, "radarr.hoard.one") then
+    if not_in_group(res.id_token.groups, "{{getv "/fqdn"}}") then
       ngx.status = 403
       ngx.exit(ngx.HTTP_FORBIDDEN)
     end      
