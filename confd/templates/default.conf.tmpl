@@ -20,9 +20,8 @@ server {
 {{range ls "/proxy"}}
   # PROXY_{{ toUpper . }}_*
   location {{getv (print "/proxy/" . "/location")}} {
-
+{{if ls (print "/proxy/" . "/group")}}
     access_by_lua '
-      
       local function not_in_group (tab, val)
         for index, value in ipairs(tab) do
           if value == val then
@@ -31,7 +30,6 @@ server {
         end
         return true
       end
-      
       local opts = {
         redirect_uri_path = "/sso",
         accept_none_alg = true,
@@ -52,18 +50,18 @@ server {
         ngx.status = 403
         ngx.exit(ngx.HTTP_FORBIDDEN)
       end
-      
-      if not_in_group(res.id_token.groups, "{{getv (print "/proxy/" . "/group") (getv "/fqdn")}}") then
+      -- check if user is in group/role      
+      if not_in_group(res.id_token.groups, "{{getv (print "/proxy/" . "/group")}}") then
         ngx.status = 403
         ngx.exit(ngx.HTTP_FORBIDDEN)
       end      
-      
       -- set headers with user info: this will overwrite any existing headers
       -- but also scrub(!) them in case no value is provided in the token
       ngx.req.set_header("x-keycloak-username", res.id_token.username)
       ngx.req.set_header("x-keycloak-name",     res.id_token.name)
       ngx.req.set_header("x-keycloak-email",    res.id_token.email)
     ';
+{{end}}
     proxy_pass {{getv (print "/proxy/" . "/protocol") "http"}}://{{getv (print "/proxy/" . "/host") "localhost"}}:{{getv (print "/proxy/" . "/port") "80"}};
   }
 {{end}}
