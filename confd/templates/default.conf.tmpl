@@ -64,6 +64,7 @@ server {
 {{end}}
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-Proto $scheme;
     proxy_pass {{getv (print "/proxy/" . "/protocol") "http"}}://{{getv (print "/proxy/" . "/host") "localhost"}}:{{getv (print "/proxy/" . "/port") "80"}};
   }
 {{end}}
