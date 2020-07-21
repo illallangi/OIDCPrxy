@@ -62,6 +62,8 @@ server {
       ngx.req.set_header("x-keycloak-email",    res.id_token.email)
     ';
 {{end}}
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
     proxy_pass {{getv (print "/proxy/" . "/protocol") "http"}}://{{getv (print "/proxy/" . "/host") "localhost"}}:{{getv (print "/proxy/" . "/port") "80"}};
   }
 {{end}}
