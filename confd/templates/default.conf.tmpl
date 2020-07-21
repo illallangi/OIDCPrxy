@@ -1,11 +1,11 @@
 server {
-    listen 80 default_server;
+    listen {{getv "/http" "80"}}  default_server;
     server_name {{getv "/fqdn"}};
     return 301 https://$host$request_uri;
 }
 
 server {
-  listen              443 ssl;
+  listen              {{getv "/https" "443"}} ssl;
   server_name         {{getv "/fqdn"}};
   ssl_certificate     /tls/tls.crt;
   ssl_certificate_key /tls/tls.key;
