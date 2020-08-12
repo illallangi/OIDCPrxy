@@ -63,6 +63,7 @@ server {
       ngx.req.set_header("x-keycloak-email",    res.id_token.email)
     ';
 {{end}}
+    add_header Content-Security-Policy upgrade-insecure-requests;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-Proto $scheme;
