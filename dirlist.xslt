@@ -97,6 +97,7 @@ div.foot { font: 90% monospace; color: #787878; padding-top: 4px;}</style>
               <tr><th class="n">Name</th><th class="m">Last Modified</th><th class="s">Size</th><th class="t">Type</th></tr>
             </thead>
             <!-- uncomment the following block to enable totals -->
+            <!--
             <tfoot>
               <tr>
                 <td>&nbsp;</td>
@@ -109,6 +110,7 @@ div.foot { font: 90% monospace; color: #787878; padding-top: 4px;}</style>
                 </td>
               </tr>
             </tfoot>
+            -->
             <tbody>
               <tr><td class="n"><a href="../">Parent Directory</a>/</td><td class="m">&nbsp;</td><td class="s">- &nbsp;</td><td class="t">Directory</td></tr>
               <xsl:apply-templates />
