@@ -30,7 +30,7 @@ server {
 
 {{range ls "/redirect"}}
   # REDIRECT_{{ toUpper . }}_*
-  location {{getv (print "/redirect/" . "/location" "/")}} {
+  location {{getv (print "/redirect/" . "/location") "/"}} {
     return 301 {{getv (print "/redirect/" . "/target")}};
   }
 {{end}}
