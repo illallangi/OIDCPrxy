@@ -1,9 +1,13 @@
 #!/bin/bash
 {{range ls "/redirect"}}
+{{if ls (print "/redirect/" . "/location")}}
 # REDIRECT_{{ toUpper . }}_*
 mkdir -p /var/www/html{{getv (print "/redirect/" . "/location")}}
 {{end}}
+{{end}}
 {{range ls "/proxy"}}
+{{if ls (print "/proxy/" . "/location")}}
 # PROXY_{{ toUpper . }}_*
 mkdir -p /var/www/html{{getv (print "/proxy/" . "/location")}}
+{{end}}
 {{end}}

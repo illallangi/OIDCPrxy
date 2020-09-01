@@ -30,13 +30,13 @@ server {
 
 {{range ls "/redirect"}}
   # REDIRECT_{{ toUpper . }}_*
-  location {{getv (print "/redirect/" . "/location")}} {
+  location {{getv (print "/redirect/" . "/location" "/")}} {
     return 301 {{getv (print "/redirect/" . "/target")}};
   }
 {{end}}
 {{range ls "/proxy"}}
   # PROXY_{{ toUpper . }}_*
-  location {{getv (print "/proxy/" . "/location")}} {
+  location {{getv (print "/proxy/" . "/location") "/"}} {
 {{if ls (print "/proxy/" . "/group")}}
     access_by_lua '
       local function not_in_group (tab, val)
