@@ -23,6 +23,10 @@ jobs:
       - name: Lint Python
         id: python-lint
         uses: whynothugo/python-linting@master
+      - name: Lint YAML
+        uses: ibiqlik/action-yamllint@v1
+        with:
+          strict: true
       - name: Bump Version
         id: github-tag
         uses: anothrNick/github-tag-action@1.17.2

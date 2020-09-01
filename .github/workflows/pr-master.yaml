@@ -20,6 +20,10 @@ jobs:
       - name: Lint Python
         id: python-lint
         uses: whynothugo/python-linting@master
+      - name: Lint YAML
+        uses: ibiqlik/action-yamllint@v1
+        with:
+          strict: true
       - name: Prepare Environment
         id: prepare
         env:
