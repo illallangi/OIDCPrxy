@@ -1,5 +1,6 @@
 ---
 name: Respond to a Pull Request on Master
+# yamllint disable-line rule:truthy
 on:
   pull_request:
     branches: master
