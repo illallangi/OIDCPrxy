@@ -1,10 +1,12 @@
 #!/usr/bin/env sh
-
+echo "-----"
+echo "Generating Configuration Files"
 confd -onetime -backend env -log-level debug || exit 1
-cat /etc/nginx/conf.d/default.conf
+echo "-----"
 
 if [ -f /tls/tls.crt ]; then
   echo "Using supplied certificate"
+  echo "-----"
 else
   openssl \
     req \
@@ -19,7 +21,20 @@ else
       -keyout /tls/tls.key \
       -out    /tls/tls.crt \
     || exit 1
-  echo "Generated self signed certificate"
 fi
 
+if [[ -x "/usr/local/bin/make-proxy-dirs.sh" ]]
+then
+  echo "Creating proxy and redirect directories"
+  /usr/local/bin/make-proxy-dirs.sh
+  echo "-----"
+fi
+
+
+echo "Checking Syntax"
+cat /etc/nginx/conf.d/default.conf
+${*:-/usr/local/openresty/nginx/sbin/nginx -t} || exit 1
+echo "-----"
+
+echo ${*:-/usr/local/openresty/nginx/sbin/nginx -g "daemon off;"}
 exec ${*:-/usr/local/openresty/nginx/sbin/nginx -g "daemon off;"} || exit 1

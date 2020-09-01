@@ -9,6 +9,7 @@ keys = [
     "/keycloak/realm",
     "/maxbody",
     "/proxy",
+    "/redirect",
     "/http",
     "/https"
 ]

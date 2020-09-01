@@ -1,0 +1,8 @@
+[template]
+src  = "make-proxy-dirs.sh.tmpl"
+dest = "/usr/local/bin/make-proxy-dirs.sh"
+keys = [
+    "/proxy",
+    "/redirect",
+]
+mode = "0755"

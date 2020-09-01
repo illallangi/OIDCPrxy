@@ -1,4 +1,4 @@
-FROM docker.io/openresty/openresty:1.15.8.3-alpine-fat
+FROM docker.io/openresty/openresty:1.17.8.2-3-alpine-fat
 
 RUN mkdir /var/log/nginx /tls
 
@@ -9,12 +9,12 @@ RUN apk add --no-cache \
   openssl-dev
 RUN luarocks install lua-resty-openidc
 
-ENV PROXY_ROOT_LOCATION=/
-
 COPY contrib/confd-0.16.0-linux-amd64 /usr/local/bin/confd
 COPY contrib/dumb-init_1.2.2_amd64 /usr/local/bin/dumb-init
 COPY entrypoint.sh /entrypoint.sh
 COPY confd/ /etc/confd/
+COPY nginx.conf /usr/local/openresty/nginx/conf/nginx.conf
+COPY dirlist.xslt /usr/local/openresty/nginx/xslt/dirlist.xslt
 
 RUN chmod +x \
         /entrypoint.sh \
@@ -22,5 +22,6 @@ RUN chmod +x \
         /usr/local/bin/dumb-init
 
 EXPOSE 80 443
+VOLUME /var/www/html
 
 ENTRYPOINT ["/usr/local/bin/dumb-init", "--", "/entrypoint.sh"]
