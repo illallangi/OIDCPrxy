@@ -24,7 +24,7 @@ jobs:
         id: prepare
         env:
           DOCKER_IMAGE: ${{ github.repository }}
-          DOCKER_PLATFORMS: linux/amd64,linux/arm/v7
+          DOCKER_PLATFORMS: linux/amd64
         run: |
           VERSION=edge
           TAGS="--tag ${DOCKER_IMAGE,,}:${VERSION}"
