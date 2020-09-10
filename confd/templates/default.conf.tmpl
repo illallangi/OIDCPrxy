@@ -38,6 +38,7 @@ server {
   # PROXY_{{ toUpper . }}_*
   location {{getv (print "/proxy/" . "/location") "/"}} {
 {{if ls (print "/proxy/" . "/group")}}
+    # PROXY_{{ toUpper . }}_GROUP
     access_by_lua '
       local function not_in_group (tab, val)
         for index, value in ipairs(tab) do
@@ -83,11 +84,14 @@ server {
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host $host;
+{{if ls (print "/proxy/" . "/sockets")}}
+    # PROXY_{{ toUpper . }}_SOCKETS
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
     proxy_http_version 1.1;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header Host $host;
+{{end}}
     proxy_pass {{getv (print "/proxy/" . "/protocol") "http"}}://{{getv (print "/proxy/" . "/host") "localhost"}}:{{getv (print "/proxy/" . "/port") "80"}};
   }
 {{end}}
