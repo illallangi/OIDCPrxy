@@ -28,17 +28,17 @@ server {
   lua_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
   lua_ssl_verify_depth 5;
 
-{{range ls "/redirect"}}
-  # REDIRECT_{{ toUpper . }}_*
-  location {{getv (print "/redirect/" . "/location") "/"}} {
-    return 301 $scheme://$http_host{{getv (print "/redirect/" . "/target")}};
+{{range $redirect := ls "/redirect"}}
+  # REDIRECT_{{ toUpper $redirect }}_*
+  location {{getv (print "/redirect/" $redirect "/location") "/"}} {
+    return 301 $scheme://$http_host{{getv (print "/redirect/" $redirect "/target")}};
   }
 {{end}}
-{{range ls "/proxy"}}
-  # PROXY_{{ toUpper . }}_*
-  location {{getv (print "/proxy/" . "/location") "/"}} {
-{{if ls (print "/proxy/" . "/group")}}
-    # PROXY_{{ toUpper . }}_GROUP
+{{range $proxy := ls "/proxy"}}
+  # PROXY_{{ toUpper $proxy }}_*
+  location {{getv (print "/proxy/" $proxy "/location") "/"}} {
+{{if ls (print "/proxy/" $proxy "/group")}}
+    # PROXY_{{ toUpper $proxy }}_GROUP
     access_by_lua '
       local function not_in_group (tab, val)
         for index, value in ipairs(tab) do
@@ -69,7 +69,7 @@ server {
         ngx.exit(ngx.HTTP_FORBIDDEN)
       end
       -- check if user is in group/role      
-      if not_in_group(res.id_token.groups, "{{getv (print "/proxy/" . "/group")}}") then
+      if not_in_group(res.id_token.groups, "{{getv (print "/proxy/" $proxy "/group")}}") then
         ngx.status = 403
         ngx.exit(ngx.HTTP_FORBIDDEN)
       end      
@@ -85,13 +85,17 @@ server {
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-Proto $scheme;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-{{if ls (print "/proxy/" . "/sockets")}}
-    # PROXY_{{ toUpper . }}_SOCKETS
+{{if ls (print "/proxy/" $proxy "/sockets")}}
+    # PROXY_{{ toUpper $proxy }}_SOCKETS
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
     proxy_http_version 1.1;
 {{end}}
-    proxy_pass {{getv (print "/proxy/" . "/protocol") "http"}}://{{getv (print "/proxy/" . "/host") "localhost"}}:{{getv (print "/proxy/" . "/port") "80"}};
+{{range $redirect := ls (print "/proxy/" $proxy "/redirect")}}
+    rewrite {{getv (print "/proxy/" $proxy "/redirect/" $redirect "/search")}} {{getv (print "/proxy/" $proxy "/redirect/" $redirect "/replace")}} break;
+    location {{getv (print "/proxy/" $proxy "/location") "/"}} {
+{{end}}
+    proxy_pass {{getv (print "/proxy/" $proxy "/protocol") "http"}}://{{getv (print "/proxy/" $proxy "/host") "localhost"}}:{{getv (print "/proxy/" $proxy "/port") "80"}};
   }
 {{end}}
 }
