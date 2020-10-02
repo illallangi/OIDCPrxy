@@ -93,7 +93,6 @@ server {
 {{end}}
 {{range $redirect := ls (print "/proxy/" $proxy "/redirect")}}
     rewrite {{getv (print "/proxy/" $proxy "/redirect/" $redirect "/search")}} {{getv (print "/proxy/" $proxy "/redirect/" $redirect "/replace")}} break;
-    location {{getv (print "/proxy/" $proxy "/location") "/"}} {
 {{end}}
     proxy_pass {{getv (print "/proxy/" $proxy "/protocol") "http"}}://{{getv (print "/proxy/" $proxy "/host") "localhost"}}:{{getv (print "/proxy/" $proxy "/port") "80"}};
   }
