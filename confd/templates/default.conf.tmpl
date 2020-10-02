@@ -31,7 +31,7 @@ server {
 {{range $redirect := ls "/redirect"}}
   # REDIRECT_{{ toUpper $redirect }}_*
   location {{getv (print "/redirect/" $redirect "/location") "/"}} {
-    return 301 $scheme://$http_host{{getv (print "/redirect/" $redirect "/target")}};
+    return 301 {{getv (print "/redirect/" $redirect "/target")}};
   }
 {{end}}
 {{range $proxy := ls "/proxy"}}
