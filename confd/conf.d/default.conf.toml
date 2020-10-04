@@ -11,5 +11,6 @@ keys = [
     "/proxy",
     "/redirect",
     "/http",
-    "/https"
+    "/https",
+    "/stream"
 ]
