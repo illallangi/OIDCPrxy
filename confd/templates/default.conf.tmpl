@@ -100,5 +100,5 @@ server {
 }
 
 {{range $stream := ls "/stream"}}
-# STREAM_{{ toUpper $redirect }}_*
+# STREAM_{{ toUpper $stream }}_*
 {{end}}
