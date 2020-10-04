@@ -101,4 +101,13 @@ server {
 
 {{range $stream := ls "/stream"}}
 # STREAM_{{ toUpper $stream }}_*
+stream {
+  upstream stream_{{ tolower $stream }} {
+    server {{getv (print "/stream/" $stream "/host")}}:{{getv (print "/stream/" $stream "/port")}};
+  }
+  server {
+    listen {{getv (print "/stream/" $stream "/listen")}};
+    proxy_pass stream_{{ tolower $stream }};
+  }
+}
 {{end}}
