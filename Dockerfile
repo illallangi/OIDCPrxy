@@ -13,7 +13,6 @@ COPY contrib/confd-0.16.0-linux-amd64 /usr/local/bin/confd
 COPY contrib/dumb-init_1.2.2_amd64 /usr/local/bin/dumb-init
 COPY entrypoint.sh /entrypoint.sh
 COPY confd/ /etc/confd/
-COPY nginx.conf /usr/local/openresty/nginx/conf/nginx.conf
 COPY dirlist.xslt /usr/local/openresty/nginx/xslt/dirlist.xslt
 
 RUN chmod +x \

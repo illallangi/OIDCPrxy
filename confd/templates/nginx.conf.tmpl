@@ -1,0 +1,155 @@
+worker_processes 1;
+
+load_module "/usr/local/openresty/nginx/modules/ngx_http_xslt_filter_module.so";
+
+events {
+  worker_connections 1024;
+}
+
+http {
+  include mime.types;
+  default_type application/octet-stream;
+  
+  client_body_temp_path /var/run/openresty/nginx-client-body;
+  proxy_temp_path /var/run/openresty/nginx-proxy;
+  fastcgi_temp_path /var/run/openresty/nginx-fastcgi;
+  uwsgi_temp_path /var/run/openresty/nginx-uwsgi;
+  scgi_temp_path /var/run/openresty/nginx-scgi;
+  
+  sendfile on;
+  
+  keepalive_timeout 65;
+  
+  server {
+    listen {{getv "/http" "5080"}} default_server;
+    server_name {{getv "/fqdn"}};
+    return 301 https://$host$request_uri;
+  }
+  
+  server {
+    listen {{getv "/https" "5443"}} ssl;
+    server_name {{getv "/fqdn"}};
+    ssl_certificate /tls/tls.crt;
+    ssl_certificate_key /tls/tls.key;
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    
+    root /var/www/html;
+    try_files $uri @autoindex;
+    
+    location @autoindex {
+      autoindex on;
+      autoindex_format xml;
+      xslt_string_param path $uri;
+      xslt_stylesheet xslt/dirlist.xslt;
+    }
+    
+    resolver local=on valid=1s ipv6=off;
+    
+    client_max_body_size {{getv "/maxbody" "1M"}};
+    lua_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+    lua_ssl_verify_depth 5;
+    
+{{range $redirect := ls "/redirect"}}
+
+    # REDIRECT_{{ toUpper $redirect }}_*
+    location {{getv (print "/redirect/" $redirect "/location") "/"}} {
+      return 301 {{getv (print "/redirect/" $redirect "/target")}};
+    }
+
+{{end}}
+
+{{range $proxy := ls "/proxy"}}
+
+    # PROXY_{{ toUpper $proxy }}_*
+    location {{getv (print "/proxy/" $proxy "/location") "/"}} {
+
+{{if ls (print "/proxy/" $proxy "/group")}}
+
+      # PROXY_{{ toUpper $proxy }}_GROUP
+      access_by_lua '
+        local function not_in_group (tab, val)
+          for index, value in ipairs(tab) do
+            if value == val then
+              return false
+            end
+          end
+          return true
+        end
+        local opts = {
+          redirect_uri_path = "/sso",
+          accept_none_alg = true,
+          discovery = "https://{{getv "/keycloak/fqdn" }}/auth/realms/{{getv "/keycloak/realm" }}/.well-known/openid-configuration",
+          client_id = "{{getv "/client/id" }}",
+          client_secret = "{{getv "/client/secret" }}",
+          redirect_uri_scheme = "https",
+          logout_path = "/logout",
+          redirect_after_logout_uri = "https://{{getv "/keycloak/fqdn" }}/auth/realms/{{getv "/keycloak/realm" }}/protocol/openid-connect/logout?redirect_uri=https://{{getv "/fqdn"}}/",
+          redirect_after_logout_with_id_token_hint = false,
+          session_contents = {
+            id_token=true
+          }
+        }
+        -- call introspect for OAuth 2.0 Bearer Access Token validation
+        local res, err = require("resty.openidc").authenticate(opts)
+        if err then
+          ngx.status = 403
+          ngx.exit(ngx.HTTP_FORBIDDEN)
+        end
+        -- check if user is in group/role
+        if not_in_group(res.id_token.groups, "{{getv (print "/proxy/" $proxy "/group")}}") then
+          ngx.status = 403
+          ngx.exit(ngx.HTTP_FORBIDDEN)
+        end
+        -- set headers with user info: this will overwrite any existing headers
+        -- but also scrub(!) them in case no value is provided in the token
+        ngx.req.set_header("x-keycloak-username", res.id_token.username)
+        ngx.req.set_header("x-keycloak-name", res.id_token.name)
+        ngx.req.set_header("x-keycloak-email", res.id_token.email)
+      ';
+
+{{end}}
+
+      add_header Content-Security-Policy upgrade-insecure-requests;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+{{if ls (print "/proxy/" $proxy "/sockets")}}
+
+      # PROXY_{{ toUpper $proxy }}_SOCKETS
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+      proxy_http_version 1.1;
+
+{{end}}
+
+{{range $redirect := ls (print "/proxy/" $proxy "/redirect")}}
+
+      rewrite {{getv (print "/proxy/" $proxy "/redirect/" $redirect "/search")}} {{getv (print "/proxy/" $proxy "/redirect/" $redirect "/replace")}} break;
+
+{{end}}
+
+      proxy_pass {{getv (print "/proxy/" $proxy "/protocol") "http"}}://{{getv (print "/proxy/" $proxy "/host") "localhost"}}:{{getv (print "/proxy/" $proxy "/port") "80"}};
+    }
+
+{{end}}
+
+  }
+}
+
+{{range $stream := ls "/stream"}}
+
+# STREAM_{{ toUpper $stream }}_*
+stream {
+  upstream stream_{{ toLower $stream }} {
+    server {{getv (print "/stream/" $stream "/host")}}:{{getv (print "/stream/" $stream "/port")}};
+  }
+  server {
+    listen {{getv (print "/stream/" $stream "/listen")}};
+    proxy_pass stream_{{ toLower $stream }};
+  }
+}
+
+{{end}}

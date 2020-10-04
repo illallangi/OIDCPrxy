@@ -32,7 +32,7 @@ fi
 
 
 echo "Checking Syntax"
-cat /etc/nginx/conf.d/default.conf
+cat /usr/local/openresty/nginx/conf/nginx.conf
 ${*:-/usr/local/openresty/nginx/sbin/nginx -t} || exit 1
 echo "-----"
 
