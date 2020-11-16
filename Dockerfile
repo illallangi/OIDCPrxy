@@ -1,4 +1,4 @@
-FROM docker.io/openresty/openresty:1.17.8.2-3-alpine-fat
+FROM docker.io/openresty/openresty:1.19.3.1-alpine-fat
 
 RUN mkdir /var/log/nginx /tls
 
